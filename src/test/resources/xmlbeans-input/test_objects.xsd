@@ -1,0 +1,26 @@
+<!-- http://xmlbeans.apache.org/documentation/tutorial_getstarted.html -->
+<!-- http://www.dreamincode.net/forums/topic/45313-reading-xml-using-xmlbeans -->
+
+<xs:schema
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:po="http://xmlbeans.greenflow"
+        targetNamespace="http://xmlbeans.greenflow"
+        elementFormDefault="qualified">
+    <xs:complexType name="person-subject">
+        <xs:sequence>
+            <xs:element name="name" type="po:name"/>
+            <xs:element name="address" type="po:address" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="name">
+        <xs:sequence>
+            <xs:element name="first" type="xs:string"/>
+            <xs:element name="last" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="address">
+        <xs:sequence>
+            <xs:element name="state" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
