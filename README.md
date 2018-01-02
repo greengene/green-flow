@@ -2,7 +2,7 @@
 
 GreenFlow is a project with the goal of accomplishing feats such as
 
-* Dynamically switching VMs at random points during computation.
+* Dynamically switching VMs at arbitrary points during computation.
 
 * Distributed computation of centralized code.
 
