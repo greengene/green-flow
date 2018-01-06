@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
+import greenflow.predicate.Predicate;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,13 +39,9 @@ import greenflow.workflow.Workflow;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 
-public class WorkUnit
+public abstract class WorkUnit
 {
 	private static final Logger logger = LoggerFactory.getLogger(WorkUnit.class);
-
-	private FlowController flowController;
-
-	private Command<?> command;
 
 	private Workflow workflow;
 
@@ -61,26 +58,6 @@ public class WorkUnit
 	private TargetContainerElement<WorkUnit> targetContainer;
 
 	public WorkUnit() {}
-
-	public WorkUnit(FlowController flowController)
-	{
-		setFlowController(flowController);
-	}	
-
-	public WorkUnit(Command<?> command)
-	{
-		setCommand(command);
-	}
-
-	public boolean isFlowController()
-	{
-		return getFlowController() != null;
-	}
-
-	public boolean isCommand()
-	{
-		return getCommand() != null;
-	}
 
 	@Override
 	public String toString()
@@ -154,7 +131,9 @@ public class WorkUnit
 		childWorkUnit.getTargetContainer().setId(childWorkUnit.getId());
 	}
 
-	public void execute()
+	public abstract void execute();
+
+	public void execute_REMOVE()
 	{
 		beforeExecution();
 
@@ -238,21 +217,23 @@ public class WorkUnit
 		afterExecution();
 	}
 
-	private void beforeExecution()
+	public void beforeExecution()
 	{
 	}
 
-	private void afterExecution()
+	public void afterExecution()
 	{
 	}
 
 	public void doReturn()
 	{
-		logger.debug("Suspending on workunit: " + getBreadcrumbId());
+		String breadcrumbId = getBreadcrumbId();
 
-		getWorkflow().setExecutionSuspensionPoint(getBreadcrumbId());
+		logger.debug("Suspending on workunit: " + breadcrumbId);
 
-		throw new WorkflowExecutionSuspensionException(getBreadcrumbId());
+		getWorkflow().setExecutionSuspensionPoint(breadcrumbId);
+
+		throw new WorkflowExecutionSuspensionException(breadcrumbId);
 	}
 
 	public Object lookUpVariableValue(String variable)
@@ -286,28 +267,6 @@ public class WorkUnit
 			}
 		}
 		return null;
-	}
-
-	public FlowController getFlowController()
-	{
-		return flowController;
-	}
-
-	private void setFlowController(FlowController flowController)
-	{
-		this.flowController = flowController;
-		getFlowController().setWrapperWorkUnit(this);
-	}
-
-	public Command<?> getCommand()
-	{
-		return command;
-	}
-
-	private void setCommand(Command<?> command)
-	{
-		this.command = command;
-		getCommand().setWrapperWorkUnit(this);
 	}
 
 	public TargetContainerElement<WorkUnit> getTargetContainer()
