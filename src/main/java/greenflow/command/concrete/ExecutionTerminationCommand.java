@@ -22,7 +22,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import greenflow.command.Command;
-import greenflow.command.CommandResult;
 import greenflow.exception.WorkflowExecutionTerminationException;
 
 @Component
@@ -31,7 +30,7 @@ public class ExecutionTerminationCommand extends Command<String> {
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionTerminationCommand.class);
 
 	@Override
-	public CommandResult<String> execute() {
+	public WorkUnitResult<String> execute() {
 		logger.debug("Command: done (" + getSymbolicName() + ")");
 
 		throw new WorkflowExecutionTerminationException(getWrapperWorkUnit().getTargetContainer().getBreadcrumbId());

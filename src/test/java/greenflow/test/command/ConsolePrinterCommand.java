@@ -23,7 +23,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import greenflow.command.Command;
-import greenflow.command.CommandResult;
 import greenflow.conversation.TransactionData;
 
 @Component
@@ -34,7 +33,7 @@ public class ConsolePrinterCommand extends Command<Object>
 	private static final Logger logger = LoggerFactory.getLogger(ConsolePrinterCommand.class);
 
 	@Override
-	public CommandResult<Object> execute()
+	public WorkUnitResult<Object> execute()
 	{
 		TransactionData transactionData = getWrapperWorkUnit().getWorkflow().getWorkflowContext().getTransaction().getTransactionData();
 		logger.debug("Command access to workflow contxet: Transaction ordinal: " + getWrapperWorkUnit().getWorkflow().getWorkflowContext().getTransaction().getTransactionOrdinal());

@@ -17,7 +17,6 @@
 package greenflow.test.command;
 
 import greenflow.command.Command;
-import greenflow.command.CommandResult;
 
 public class LongQuizCommand extends Command<String> {
 	private String firstName;
@@ -31,9 +30,9 @@ public class LongQuizCommand extends Command<String> {
 	}
 
 	@Override
-	public CommandResult<String> execute() {
-		return new CommandResult<String>() {
-			public String getData() {
+	public WorkUnitResult<String> execute() {
+		return new WorkUnitResult<String>() {
+			public String getResults() {
 				return "SUCCESS";
 			}
 		};

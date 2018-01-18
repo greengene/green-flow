@@ -87,7 +87,7 @@ public abstract class Predicate {
 		predicateTypeService.registerType(clazz);
 	}
 
-	abstract public boolean isSatisfied();
+	public abstract boolean isSatisfied();
 
 	public abstract String getSymbolicName();
 

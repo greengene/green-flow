@@ -14,22 +14,14 @@
    limitations under the License.
 */
 
-package greenflow.test.command;
+package greenflow.workunit;
 
-import greenflow.command.Command;
+import lombok.Data;
+import lombok.experimental.Builder;
 
-public class QuizCommand extends Command<String> {
-	@Override
-	public WorkUnitResult<String> execute() {
-		return new WorkUnitResult<String>() {
-			public String getResults() {
-				return "SUCCESS";
-			}
-		};
-	}
-
-	@Override
-	public String getSymbolicName() {
-		return "quiz-command";
-	}
+@Data @Builder
+public class ConditionedWork
+{
+	public BooleanWorkUnit condition;
+	public WorkUnit work;
 }

@@ -23,7 +23,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import greenflow.command.Command;
-import greenflow.command.CommandResult;
 import greenflow.conversation.TransactionData;
 
 @Component
@@ -34,7 +33,7 @@ public class IntegerIncrementerCommand extends Command<Integer>
 	private static final Logger logger = LoggerFactory.getLogger(IntegerIncrementerCommand.class);
 
 	@Override
-	public CommandResult<Integer> execute()
+	public WorkUnitResult<Integer> execute()
 	{
 		TransactionData transactionData = getWrapperWorkUnit().getWorkflow().getWorkflowContext().getTransaction().getTransactionData();
 		logger.debug("Command access to workflow contxet: Transaction ordinal: " + getWrapperWorkUnit().getWorkflow().getWorkflowContext().getTransaction().getTransactionOrdinal());
@@ -45,8 +44,8 @@ public class IntegerIncrementerCommand extends Command<Integer>
 
 		final int result = input + 1;
 
-		return new CommandResult<Integer>() {
-			public Integer getData()
+		return new WorkUnitResult<Integer>() {
+			public Integer getResults()
 			{
 				return result;
 			}

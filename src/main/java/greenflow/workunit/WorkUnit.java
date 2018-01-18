@@ -16,29 +16,23 @@
 
 package greenflow.workunit;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import greenflow.predicate.Predicate;
-import org.apache.commons.lang3.StringUtils;
+import lombok.Data;
+import lombok.experimental.Builder;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import greenflow.command.Command;
 import greenflow.container.interaction.TargetContainerElement;
 import greenflow.exception.WorkflowExecutionSuspensionException;
-import greenflow.flowcontroller.FlowController;
 import greenflow.workflow.Workflow;
 
 import com.google.common.base.CharMatcher;
-import com.google.common.base.Splitter;
 
+@Slf4j
+@Data @Builder
 public abstract class WorkUnit
 {
 	private static final Logger logger = LoggerFactory.getLogger(WorkUnit.class);
@@ -47,7 +41,7 @@ public abstract class WorkUnit
 
 	private long id;
 
-	private Map<String, Object> variables;
+	private Map<String, Variable> variables;
 
 	private boolean returnAtCompletion = false;
 
@@ -57,7 +51,49 @@ public abstract class WorkUnit
 
 	private TargetContainerElement<WorkUnit> targetContainer;
 
+	public Class returnType;
+
+	public void assignTo() {
+	}
+
+	private Map<String, Variable> returnedVariables()
+	{
+		return getVariables().entrySet()
+				.stream()
+				.filter(entry -> entry.getValue().isReturned())
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+	}
+
 	public WorkUnit() {}
+
+	public WorkUnit(Class returnType, WorkUnit[] workUnits)
+	{
+		setReturnType(returnType);
+
+		for (WorkUnit workUnit: workUnits) addChildWorkUnit(workUnit);
+	}
+
+	public void assignResult()
+	{
+		returnedVariables().entrySet()
+				.stream()
+				.forEach(entry ->
+				{
+					String assignTo = entry.getValue().getAssignTo();
+					Object result = entry.getValue().getValue();
+
+					WorkUnit variableScopeWorkUnit = lookUpVariableScopeWorkUnit(assignTo);
+					variableScopeWorkUnit.getVariables().get(assignTo).setValue(result);
+
+					if (getWorkflow().getDirtyVariables().get(variableScopeWorkUnit) == null)
+					{
+						getWorkflow().getDirtyVariables().put(variableScopeWorkUnit, new HashSet<String>());
+					}
+					getWorkflow().getDirtyVariables().get(variableScopeWorkUnit).add(assignTo);
+
+					log.debug("Assigning value to variable! workunit: " + variableScopeWorkUnit.getBreadcrumbId() + ", variable: " + assignTo + ", value: " + variableScopeWorkUnit.getVariables().get(assignTo));
+				});
+	}
 
 	@Override
 	public String toString()
@@ -119,103 +155,14 @@ public abstract class WorkUnit
 	{
 		childWorkUnit.setWorkflow(getWorkflow());		
 
-		if (getCommand() != null)
-		{
-			WorkUnit firstChildWorkUnit = new WorkUnit(getCommand());
-			setCommand(null);
-			addChildWorkUnit(firstChildWorkUnit);
-		}
-
 		childWorkUnit.setTargetContainer(getTargetContainer().addChildWorkUnit(childWorkUnit));
 
 		childWorkUnit.getTargetContainer().setId(childWorkUnit.getId());
 	}
 
-	public abstract void execute();
+	protected abstract void execute();
 
-	public void execute_REMOVE()
-	{
-		beforeExecution();
-
-		if (isFlowController())
-		{
-			getFlowController().controlFlow();
-		}
-
-		else if (isCommand())
-		{
-			logger.debug("Executing: Command (" + getCommand().getSymbolicName() + "), id = " +  getBreadcrumbId() + " (" + getTargetContainer().getId() + ")");
-
-			if (StringUtils.isNotBlank(getCommand().getAssignTo()) && lookUpVariableScopeWorkUnit(getCommand().getAssignTo()) != null)
-			{
-				WorkUnit variableScopeWorkUnit = lookUpVariableScopeWorkUnit(getCommand().getAssignTo());
-
-				variableScopeWorkUnit.getVariables().put(getCommand().getAssignTo(),  getCommand().execute().getData());
-
-				if (getWorkflow().getDirtyVariables().get(variableScopeWorkUnit) == null)
-				{
-					getWorkflow().getDirtyVariables().put(variableScopeWorkUnit, new HashSet<String>());
-				}
-				getWorkflow().getDirtyVariables().get(variableScopeWorkUnit).add(getCommand().getAssignTo());
-
-				logger.debug("Assigning value to variable! workunit: " + variableScopeWorkUnit.getBreadcrumbId() + ", variable: " + getCommand().getAssignTo() + ", value: " + variableScopeWorkUnit.getVariables().get(getCommand().getAssignTo()));
-			}
-			else
-			{
-				getCommand().execute();
-
-				logger.debug("Command: done (" + getCommand().getSymbolicName() + ")");
-			}
-		}		
-
-		else
-		{
-			if (getWorkflow().getExecutionSuspensionPoint() != null)
-			{
-				if (!getWorkflow().getExecutionSuspensionPoint().equals(getBreadcrumbId()))
-				{
-					logger.debug("Traversing while looking up suspension point: Container Block, id = " + getBreadcrumbId() + " (" + getId() + ")");
-
-					for (WorkUnit workUnit :
-							getChildWorkUnits().subList(
-								Integer.parseInt(Splitter.on('.').splitToList(getWorkflow().getExecutionSuspensionPoint()).get(CharMatcher.is('.').countIn(getBreadcrumbId()) + 1)) - 1,
-								getChildWorkUnits().size())
-							)
-					{
-						workUnit.execute();
-					}
-				}
-				else
-				{
-					logger.debug("Reached suspension point: " + getBreadcrumbId() + " - Starting Execution...");
-				}
-			}
-
-			else
-			{
-				logger.debug("Executing: Container Block, id = " + getBreadcrumbId() + " (" + getId() + ")");
-
-				for (WorkUnit workUnit : getChildWorkUnits())
-				{
-					workUnit.execute();
-				}
-			}
-		}
-
-		if (isReturnAtCompletion())
-		{
-			if (getWorkflow().getExecutionSuspensionPoint() != null && getWorkflow().getExecutionSuspensionPoint().equals(getBreadcrumbId()))
-			{
-				getWorkflow().setExecutionSuspensionPoint(null);
-			}
-			else if (getWorkflow().getExecutionSuspensionPoint() == null)
-			{
-				doReturn();
-			}
-		}
-
-		afterExecution();
-	}
+	public abstract String getSymbolicName();
 
 	public void beforeExecution()
 	{
@@ -299,26 +246,12 @@ public abstract class WorkUnit
 		this.id = id;
 	}
 
-	public Map<String, Object> getVariables()
-	{
-		if (variables == null)
-		{
-			setVariables(new LinkedHashMap<String, Object>());
-		}		
-		return variables;
-	}
-
 	public void addVariable()
 	{
 	}
 
 	public void removeVariable()
 	{
-	}
-
-	private void setVariables(Map<String, Object> variables)
-	{
-		this.variables = variables;
 	}
 
 	public boolean isReturnAtCompletion()

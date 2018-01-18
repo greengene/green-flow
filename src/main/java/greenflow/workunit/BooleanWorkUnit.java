@@ -14,8 +14,17 @@
    limitations under the License.
 */
 
-package greenflow.command;
+package greenflow.workunit;
 
-public interface CommandResult<T> {
-	T getData();
+import lombok.Data;
+import lombok.experimental.Builder;
+
+@Data
+@Builder
+public abstract class BooleanWorkUnit extends WorkUnit
+{
+	public BooleanWorkUnit(ConditionedWork[] conditionedWorks)
+	{
+		super(conditionedWorks, Boolean.class);
+	}
 }

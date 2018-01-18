@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import greenflow.command.Command;
-import greenflow.command.CommandResult;
 
 @Component
 @Scope("prototype")
@@ -37,7 +36,7 @@ public class MockDiscoveryCommand extends Command<XmlObject> {
 	private static final Logger logger = LoggerFactory.getLogger(MockDiscoveryCommand.class);
 
 	@Override
-	public CommandResult<XmlObject> execute() {
+	public WorkUnitResult<XmlObject> execute() {
 		final PersonSubject personSubject = PersonSubject.Factory.newInstance();
 
 		Name name =	personSubject.addNewName();
@@ -58,8 +57,8 @@ public class MockDiscoveryCommand extends Command<XmlObject> {
 			personSubject.getAddressList().add(address);
 		}
 
-		return new CommandResult<XmlObject>() {
-			public XmlObject getData()
+		return new WorkUnitResult<XmlObject>() {
+			public XmlObject getResults()
 			{
 				return personSubject;
 			}

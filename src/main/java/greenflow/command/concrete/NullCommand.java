@@ -17,7 +17,6 @@
 package greenflow.command.concrete;
 
 import greenflow.command.Command;
-import greenflow.command.CommandResult;
 
 public class NullCommand extends Command<String> {
 	private static final NullCommand instance = new NullCommand();
@@ -27,7 +26,7 @@ public class NullCommand extends Command<String> {
 	} 
 
 	@Override
-	public CommandResult<String> execute() {
+	public WorkUnitResult<String> execute() {
 		return null;
 	}
 

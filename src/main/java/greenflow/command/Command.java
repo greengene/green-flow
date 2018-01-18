@@ -43,7 +43,7 @@ public abstract class Command<T> {
 		commandTypeService.registerType(clazz);
 	}
 
-	public abstract CommandResult<T> execute();
+	public abstract WorkUnitResult<T> execute();
 
 	public abstract String getSymbolicName();
 
